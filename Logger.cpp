@@ -185,11 +185,7 @@ void Logger::Draw(const char* title, bool* p_open)
     ImGui::SameLine();
     Filter.Draw("Filter", -100.0f);
 
-    ImGui::Separator();
-
-    float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing(); 
-    ImGui::BeginChild("ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false, ImGuiWindowFlags_HorizontalScrollbar);
-
+    // Options popup (kept near the toolbar so it opens where user clicks)
     if (ImGui::BeginPopup("Options"))
     {
         ImGui::Checkbox("Auto-scroll", &AutoScroll);
@@ -200,13 +196,17 @@ void Logger::Draw(const char* title, bool* p_open)
 
         const char* level_items[] = { "INFO", "WARN", "ERROR", "GAME" };
         int current_level = static_cast<int>(ConsoleMinLevel);
-        if (current_level < 0) current_level = 0;
-        if (current_level > 3) current_level = 3;
+        current_level = (current_level < 0) ? 0 : (current_level > 3 ? 3 : current_level);
         if (ImGui::Combo("Console min level", &current_level, level_items, IM_ARRAYSIZE(level_items)))
             ConsoleMinLevel = static_cast<LogLevel>(current_level);
 
         ImGui::EndPopup();
     }
+
+    ImGui::Separator();
+
+    float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing(); 
+    ImGui::BeginChild("ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false, ImGuiWindowFlags_HorizontalScrollbar);
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
 
