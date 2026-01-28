@@ -15,6 +15,8 @@ Logger& Logger::GetInstance()
 Logger::Logger()
 {
     AutoScroll = true;
+    ConsoleEnabled = true;
+    ConsoleMinLevel = LogLevel::ERROR;
     memset(InputBuf, 0, sizeof(InputBuf));
     FileStream.open("log.txt", std::ios::out | std::ios::app);
 }
@@ -23,6 +25,45 @@ Logger::~Logger()
 {
     if (FileStream.is_open())
         FileStream.close();
+}
+
+void Logger::SetConsoleEnabled(bool enabled)
+{
+    ConsoleEnabled = enabled;
+}
+
+bool Logger::IsConsoleEnabled() const
+{
+    return ConsoleEnabled;
+}
+
+void Logger::SetConsoleMinLevel(LogLevel level)
+{
+    ConsoleMinLevel = level;
+}
+
+LogLevel Logger::GetConsoleMinLevel() const
+{
+    return ConsoleMinLevel;
+}
+
+const char* Logger::GetLevelTag(LogLevel level)
+{
+    switch (level)
+    {
+    case LogLevel::INFO:    return "[INFO]";
+    case LogLevel::WARNING: return "[WARN]";
+    case LogLevel::ERROR:   return "[ERROR]";
+    case LogLevel::GAME:    return "[GAME]";
+    default:                return "[LOG]";
+    }
+}
+
+bool Logger::ShouldLogToConsole(LogLevel level) const
+{
+    if (!ConsoleEnabled)
+        return false;
+    return static_cast<int>(level) >= static_cast<int>(ConsoleMinLevel);
 }
 
 std::string Logger::GetTimestamp()
@@ -56,6 +97,13 @@ void Logger::Log(LogLevel level, const char* fmt, ...)
     entry.level = level;
 
     Items.push_back(entry);
+
+    // Print to console
+    if (ShouldLogToConsole(level))
+    {
+        std::ostream& os = (level == LogLevel::ERROR) ? std::cerr : std::cout;
+        os << entry.timestamp << " " << GetLevelTag(level) << " " << entry.message << std::endl;
+    }
 
     // Save to file
     if (FileStream.is_open())
@@ -145,6 +193,18 @@ void Logger::Draw(const char* title, bool* p_open)
     if (ImGui::BeginPopup("Options"))
     {
         ImGui::Checkbox("Auto-scroll", &AutoScroll);
+
+        ImGui::Separator();
+        ImGui::TextUnformatted("Console logging");
+        ImGui::Checkbox("Enable console output", &ConsoleEnabled);
+
+        const char* level_items[] = { "INFO", "WARN", "ERROR", "GAME" };
+        int current_level = static_cast<int>(ConsoleMinLevel);
+        if (current_level < 0) current_level = 0;
+        if (current_level > 3) current_level = 3;
+        if (ImGui::Combo("Console min level", &current_level, level_items, IM_ARRAYSIZE(level_items)))
+            ConsoleMinLevel = static_cast<LogLevel>(current_level);
+
         ImGui::EndPopup();
     }
 

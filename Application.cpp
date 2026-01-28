@@ -3,10 +3,6 @@
 #include "Logger.h"
 
 namespace ClassGame {
-        //
-        // our global variables
-        //
-        // Keep state for the Game Control window here for simplicity
         static bool show_demo_window = true;
         static bool show_another_window = false;
         static int counter = 0;
